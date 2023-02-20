@@ -1,14 +1,11 @@
 #pragma once
-#include "Grid.h"
+#include "Matrix.h"
 #include "Area.h"
 #include "Boundary.h"
+#include "Node.h"
 #include <cmath>
 
-using namespace std;
-
-typedef double type;
-typedef vector<type> Vector;
-typedef vector<vector<type>> Matrix;
+//typedef vector<vector<type>> Matrix;
 
 
 class MKR
@@ -21,11 +18,12 @@ public:
    vector<Area> vectorAreas;
    vector<Node> grid;
    vector<Boundary> vectorB1, vectorB2x, vectorB2y;
+   Matrix Aij;
    MKR();
    void Boundaries();
    void Areas();
    void Grid();
-
+   int makeMatrix();
    int input();
    void GaussZeidel();
    void BlockRelaxation();

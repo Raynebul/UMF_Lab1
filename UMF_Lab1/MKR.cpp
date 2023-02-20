@@ -190,7 +190,7 @@ void MKR::Boundaries()
 
 	in.close();
 
-	A.k = countX - 2;
+	Aij.k = countX - 2;
 
 }
 
@@ -198,8 +198,6 @@ int MKR::input()
 {
 	// ввод данных по сетке    
 	//Vector vectorX, vectorY; // вектор x и y
-
-	
 	Grid();
 	Areas();
 	Boundaries();

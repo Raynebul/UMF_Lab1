@@ -129,8 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Area.cpp" />
     <ClCompile Include="Boundary.cpp" />
-    <ClCompile Include="Figure.cpp" />
-    <ClCompile Include="Grid.cpp" />
+    <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="MKR.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -138,8 +137,7 @@
   <ItemGroup>
     <ClInclude Include="Area.h" />
     <ClInclude Include="Boundary.h" />
-    <ClInclude Include="Figure.h" />
-    <ClInclude Include="Grid.h" />
+    <ClInclude Include="Matrix.h" />
     <ClInclude Include="MKR.h" />
     <ClInclude Include="Node.h" />
   </ItemGroup>

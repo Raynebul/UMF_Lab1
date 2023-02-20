@@ -11,7 +11,6 @@ using namespace std;
 
 typedef double type;
 typedef vector<type> Vector;
-typedef vector<vector<type>> Matrix;
 
 class Node
 {

@@ -12,10 +12,11 @@ using namespace std;
 typedef double type;
 typedef vector<type> Vector;
 
-class Area
+
+class Matrix
 {
 public:
-	type x1, x2, y1, y2;
-	int lambda, gamma, fId; // - функция 
+   vector<double> di, u1, u2, l1, l2;
+   int k = -1;
 };
 
