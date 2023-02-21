@@ -5,15 +5,97 @@ MKR::MKR()
 
 };
 
-void MKR::GaussZeidel() 
+int MKR::sub(Vector& a, Vector& b) // b = a - b
 {
+	for (int i = 0; i < a.size(); )
+		b[i] = a[i] - b[i];
+	return 0;
+}
 
-};
-
-void MKR::BlockRelaxation()
+type MKR::norm(Vector& a) // норма корень квадратный из суммы квадратов
 {
+	type res = 0;
+	for (int i = 0; i < a.size();)
+		res += a[i] * a[i];
+	res = sqrt(res);
+	return res;
+}
 
-};
+type MKR::teta(Node point, int idBound)
+{
+	switch (idBound)
+	{
+	case 0:
+		return 0;
+	case 1: // в соответствии с тестом
+		return 0;
+
+	default:
+		cout << "Something in teta get wrong" << endl;
+		break;
+	}
+	return 0;
+
+}
+
+type MKR::step(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& b, Vector& x0, Vector& x, type w, int& N, int& m, Vector& z, int i)
+{
+	double t = 0;
+	t += di[i] * x0[i];// элемент главной диагонали
+
+	// ниже
+	if (i > 0)
+		t += l1[i - 1] * z[i - 1];
+	if (i > m + 1)
+		t += l2[i - m - 2] * z[i - m - 2];
+
+	// выше
+	if (i < N - 1)
+		t += u1[i] * x0[i + 1];
+	if (i < N - m - 2)
+		t += u2[i] * x0[i + m + 2];
+
+	t = b[i] - t;
+	return t;
+}
+
+int MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0,type& eps, type& w, int& N, int& m, int& max_iter)
+{
+	type delta = 1000;  // относительна€ нев€зка
+	for (int k = 0; k < max_iter && delta >= eps; k++)   // счетчик итераций
+	{
+		delta = 0;
+		for (int i = 0; i < N; i++)
+		{
+			type t = step(l1, l2, u1, u2, di, f, x0, x0, w, N, m, x0, i);
+			x0[i] = x0[i] + w * t / di[i];
+		}
+		for (int i = 0; i < N; i++)
+		{
+			type t = step(l1, l2, u1, u2, di, f, x0, x0, w, N, m, x0, i);
+			delta += t * t;
+		}
+
+		delta = sqrt(delta) / norm(f);   // относительна€ нев€зка      
+	}
+	return 0;
+}
+
+type MKR::func(Node point)
+{
+	switch (vectorAreas[point.area].fId)
+	{
+	case 0:
+		return 0;
+	case 1:
+		return 10; // мен€ем функцию
+	default:
+		cout << "Something in func get wrong" << endl;
+		break;
+	}
+	return 0;
+
+}
 
 void MKR::Areas()
 {
@@ -203,3 +285,361 @@ int MKR::input()
 	Boundaries();
 	return 0;
 }
+
+int MKR::makeMatrix()
+{
+	Aij.di.resize(grid.size());
+	Aij.u1.resize(grid.size() - 1);
+	Aij.l1.resize(grid.size() - 1);
+	Aij.u2.resize(grid.size() - 2 - Aij.k);
+	Aij.l2.resize(grid.size() - 2 - Aij.k);
+	f.resize(grid.size());
+
+	f[0] = func(grid[0]);
+
+	// заполнить фиктивные узлы, если они по верхней/нижней границе
+	for (int i = 0; i < Aij.k + 2; i++)
+		if (!vectorAreas[grid[i].area].lambda)
+		{
+			f[i] = 0;
+			Aij.di[i] = 1;
+		}
+
+	for (int i = grid.size() - 2 - Aij.k; i < grid.size(); i++)
+		if (!vectorAreas[grid[i].area].lambda)
+		{
+			f[i] = 0;
+			Aij.di[i] = 1;
+		}
+
+	// блок с 5 диаг (верх/ниж границ не смотрим, боковые границы поправим в граничных услови€х)
+	for (int i = Aij.k + 2; i < grid.size() - 2 - Aij.k; i++)
+	{
+		type hx1 = grid[i].x - grid[i - 1].x;
+		type hx2 = grid[i + 1].x - grid[i].x;
+		type hy1 = grid[i].y - grid[i - Aij.k - 2].y;
+		type hy2 = grid[i + Aij.k + 2].y - grid[i].y;
+		type curLambda = vectorAreas[grid[i].area].lambda;
+
+		// если разность отрицательна, вз€т боковой граничный узел как текущий
+		if (curLambda)
+		{
+			if (hx1 > 0 && hx2 > 0)
+			{
+				f[i] = func(grid[i]);
+				Aij.di[i] += curLambda * 2 / (hx1 * hx2) + curLambda * 2 / (hy1 * hy2) + vectorAreas[grid[i].area].gamma;
+				Aij.u1[i] += curLambda * -2 / (hx1 * (hx1 + hx2));
+				Aij.l1[i - 1] += curLambda * -2 / (hx1 * (hx1 + hx2));
+				Aij.u2[i] += curLambda * -2 / (hx1 * (hx1 + hx2));
+				Aij.l2[i - Aij.k - 2] += curLambda * -2 / (hx1 * (hx1 + hx2));
+			}
+		}
+		else
+		{
+			f[i] = 0;
+			Aij.di[i] = 1;
+		}
+
+		f[grid.size() - 1] = func(grid[grid.size() - 1]);
+
+		// краевые 2
+		//   // ќ’
+		for (int i = 0; i < vectorB2x.size(); i++)
+			for (int j = 0; j < vectorB2x[i].nodes.size(); j++)
+			{
+				int v = vectorB2x[i].nodes[j]; // глобальный номер текущего узла
+
+				// занулить остальные элементы строки
+				// проверить, есть ли эти элементы на строке
+				if (v % (Aij.k + 2) != (Aij.k + 1) && vectorAreas[grid[v + 1].area].lambda != 0) // есть 																				узел правее не фиктивный
+				{
+					f[v] = -teta(grid[v], vectorB2x[i].teta);
+					double h = grid[v + 1].x - grid[v].x;
+					Aij.u1[v] = 1 / h;
+					Aij.di[v] = -1 / h;
+
+					if (v % (Aij.k + 2) != 0) // если и левее узел
+						Aij.l1[v - 1] = 0;
+				}
+				else
+					if (v % (Aij.k + 2) != 0) // если нет узла правее, но есть левее
+					{
+						f[v] = teta(grid[v], vectorB2x[i].teta);
+						type h = grid[v].x - grid[v - 1].x;
+						Aij.di[v] = 1 / h;
+						Aij.l1[v - 1] = -1 / h;
+					}
+
+				if (v < grid.size() - Aij.k - 2)
+					Aij.u2[v] = 0;
+				if (v >= Aij.k + 2)
+					Aij.l2[v - Aij.k - 2] = 0;
+			}
+
+		//   // ќ”
+		for (int i = 0; i < vectorB2y.size(); i++)
+		{
+			for (int j = 0; j < vectorB2y[i].nodes.size(); j++)
+			{
+				int v = vectorB2y[i].nodes[j]; // глобальный номер текущего узла
+
+				f[v] = teta(grid[v], vectorB2y[i].teta);
+
+				// занулить остальные элементы строки
+				// проверить, есть ли эти элементы на строке
+				if (v % (Aij.k + 2) != (Aij.k + 1))
+					Aij.u1[v] = 0;
+
+				if (v % (Aij.k + 2) != 0)
+					Aij.l1[v - 1] = 0;
+
+				if (v < grid.size() - Aij.k - 2 && vectorAreas[grid[v + Aij.k + 2].area].lambda != 0) // 																			есть узел выше не фиктивный
+				{
+					type h = grid[v + Aij.k + 2].y - grid[v].y;
+					Aij.u2[v] = 1 / h;
+					Aij.di[v] = -1 / h;
+					if (v >= Aij.k + 2)
+						Aij.l2[v - Aij.k - 2] = 0;
+				}
+				else
+					if (v >= Aij.k + 2)
+					{
+						type h = grid[v].y - grid[v - Aij.k - 2].y;
+						Aij.l2[v - Aij.k - 2] = -1 / h;
+						Aij.di[v] = 1 / h;
+					}
+			}
+		}
+
+		// краевые 1
+		for (int i = 0; i < vectorB1.size(); i++)
+		{
+			for (int j = 0; j < vectorB1[i].nodes.size(); j++)
+			{
+				int v = vectorB1[i].nodes[j]; // глобальный номер текущего узла
+				Aij.di[v] = 1; // 1 на главной
+				f[v] = teta(grid[v], vectorB1[i].teta);
+
+				// занулить остальные элементы строки
+				// проверить, есть ли эти элементы на строке
+				if (v % (Aij.k + 2) != (Aij.k + 1))
+					Aij.u1[v] = 0;
+
+				if (v % (Aij.k + 2) != 0)
+					Aij.l1[v - 1] = 0;
+
+				if (v < grid.size() - Aij.k - 2)
+					Aij.u2[v] = 0;
+
+				if (v >= Aij.k + 2)
+					Aij.l2[v - Aij.k - 2] = 0;
+			}
+		}
+		return 0;
+
+	}
+}
+
+int MKR::solve(string filename)
+{
+	int N = grid.size(), m = Aij.k, max_iter = 1000;
+	type W = 1, eps = 1e-15;
+	Vector u(N);
+
+	int temp = GaussZeidel(Aij.l1, Aij.l2, Aij.u1, Aij.u2, Aij.di, f, u, eps, W, N, m, max_iter);
+	return temp;
+}
+
+
+//////////////////////////////
+///////ЅЋќ„Ќјя –≈Ћј —ј÷»я/////
+//////////////////////////////
+
+/*
+int MKR::BlockRelaxation()
+{
+	omega = 0.01;
+	ofstream output("output.txt"); //файл, куда будет все записыватьс€.
+	//ReadFile();
+	int blocksize = blocksize_;
+	Factorize(blocksize); // факториизаци€ матрицы
+	while (omega < 2.01) //оптимальный параметр релаксации
+	{
+		int k;
+		residual = epsilon + 1;
+		x_next = x_start;
+		clock_t begin = clock();
+		for (k = 0; k<maxiter && residual > epsilon; k++)
+		{
+			BlockRelazationIteration(blocksize);
+		}
+		clock_t end = clock();
+		clock_t time = end - begin;
+		if (k < k_min)
+		{
+			k_min = k;
+			residual_min = residual;
+			opt_omega = omega;
+			clockf = time;
+		}
+		WriteFile(k, output);
+		omega += 0.01;
+	}
+	output.close();
+	return 0;
+}
+
+int  MKR::BlockSize()
+{
+	// int block = m + 2;
+	if (blocksize_ > m + 2 || n % blocksize_ != 0)
+		return 0;
+	if (blocksize_ == 1)
+		return 1;
+	return 2;
+	// while (block > 1 && n % block != 0)
+		// block--;
+	 //return block;
+}
+
+void  MKR::Factorize(int blocksize)
+{
+	org_di = A[2]; //оставл€ем изначальные значени€ диагоналей дл€ нахождение residual
+	org_u = A[3];
+	org_l = A[1];
+	int num = n / blocksize;
+	int u = 3;
+	int l = 1;
+
+	for (int i = 0; i < num; i++)
+	{
+		for (int j = i * blocksize; j < (i + 1) * blocksize; j++)
+		{
+			if (j - 1 >= i * blocksize)
+			{
+				A[2][j] -= A[l][j] * A[u][j - 1];
+			}
+			if (j + 1 < (i + 1) * blocksize)
+			{
+				A[l][j + 1] /= A[2][j];
+			}
+		}
+	}
+};
+
+void MKR::BlockRelazationIteration(int blocksize)
+{
+	type nev = 0.0;
+	//type sumnev = 0.0;
+	residual = 0.0;
+	int num = n / blocksize;
+	for (int i = 0; i < num; i++)
+	{
+		Vector Ri = Ri_(blocksize, i);
+		for (size_t i = 0; i < blocksize; i++)
+		{
+			Ri[i] *= omega;
+		}
+
+		Vector solution = LU_SOL(i, blocksize, Ri);
+		for (int j = 0; j < blocksize; j++)
+		{
+			x_next[i * blocksize + j] += solution[j];
+		}
+	}
+	for (int i = 0; i < n; i++)
+	{
+		residual += ResidualBlock(i) * ResidualBlock(i);
+	}
+	residual = sqrt(residual) / sqrt(norm);
+	int k = 0;
+
+}
+
+type MKR::ResidualBlock(int i)
+{
+	int index[5] = { -m - 2, -1, 0, 1, m + 2 };
+	type sum = 0.0;
+	sum += org_di[i] * x_next[i];
+	if (i + index[0] >= 0 && i + index[0] < n)
+		sum += A[0][i] * x_next[i + index[0]];
+	if (i + index[1] >= 0 && i + index[1] < n)
+		sum += org_l[i] * x_next[i + index[1]];
+	if (i + index[3] >= 0 && i + index[3] < n)
+		sum += org_u[i] * x_next[i + index[3]];
+	if (i + index[4] >= 0 && i + index[4] < n)
+		sum += A[4][i] * x_next[i + index[4]];
+	return F[i] - sum;
+}
+
+Vector MKR::Ri_(int blocksize, int i)
+{
+	int num = n / blocksize;
+	Vector Ri(blocksize);
+	for (int j = 0; j < blocksize; j++)
+	{
+		Ri[j] = F[i * blocksize + j];
+	}
+	for (int j = 0; j < num; j++)
+	{
+		int start_col = j * blocksize;
+		int end_col = (j + 1) * blocksize;
+		int start_row = i * blocksize;
+		int end_row = (i + 1) * blocksize;
+		for (int a1 = start_row; a1 < end_row; a1++)
+		{
+			sum sum = 0.0;
+			for (int a2 = start_col; a2 < end_col; a2++)
+			{
+				sum += FindAElement(a1, a2) * x_next[a2];
+			}
+			Ri[a1 % blocksize] -= sum;
+			// residual += (F[a1]-sum) * (F[a1] - sum);
+		}
+	}
+	return Ri;
+};
+
+type MKR::FindAElement(int a1, int a2)
+{
+	int index[5] = { -m - 2, -1, 0, 1, m + 2 };
+
+	if (a2 == a1 + index[0])
+		return A[0][a1];
+	if (a2 == a1 + index[1])
+		return org_l[a1];
+	if (a2 == a1)
+		return org_di[a1];
+	if (a2 == a1 + index[3])
+		return org_u[a1];
+	if (a2 == a1 + index[4])
+		return A[4][a1];
+	return 0;
+};
+
+Vector MKR::LU_SOL(int i, int blocksize, Vector& Ri)
+{
+	Vector y(blocksize);
+	int u = 3;
+	int l = 1;
+	y[0] = Ri[0];
+	for (int counter = 1; counter < blocksize; counter++) //Ly=Ri
+	{
+		int new_offset = i * blocksize + counter;
+		y[counter] = (Ri[counter] - A[l][i * blocksize + counter] * y[counter - 1]); // / A[2][i * blocksize + counter];
+	}
+
+
+	Vector x(blocksize);
+	x[blocksize - 1] = y[blocksize - 1] / A[2][(i + 1) * blocksize - 1];
+	for (int counter = blocksize - 2; counter >= 0; counter--) //UYi=y
+	{
+		x[counter] = (y[counter] - A[u][i * blocksize + counter] * x[counter + 1]) / A[2][i * blocksize + counter];
+	}
+	return x;
+}
+*/
+
+//////////////////////////////
+///////ЅЋќ„Ќјя –≈Ћј —ј÷»я/////
+//////////////////////////////

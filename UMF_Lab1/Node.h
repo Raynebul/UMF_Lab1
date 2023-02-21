@@ -16,8 +16,6 @@ class Node
 {
 public:
    type x, y; // Координаты точек
- //  type kx, ky; // Коэффициент разрядки
-  // type hx, hy; // Коэффициент приращения
-  // int Nx, Ny; // Кол-во разбиений
+   int area;
 };
 
