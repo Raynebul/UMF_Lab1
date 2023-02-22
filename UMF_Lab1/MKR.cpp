@@ -28,7 +28,7 @@ type MKR::teta(Node point, int idBound)
 	case 0:
 		return 0;
 	case 1: // в соответствии с тестом
-		return 0;
+		return 10;
 
 	default:
 		cout << "Something in teta get wrong" << endl;
@@ -61,7 +61,7 @@ type MKR::step(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& b
 
 int MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0,type& eps, type& w, int& N, int& m, int& max_iter)
 {
-	type delta = 1000;  // относительна€ нев€зка
+	type delta = 1;  // относительна€ нев€зка
 	for (int k = 0; k < max_iter && delta >= eps; k++)   // счетчик итераций
 	{
 		delta = 0;
@@ -83,7 +83,16 @@ int MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vec
 
 type MKR::func(Node point)
 {
-	switch (vectorAreas[point.area].fId)
+	if (vectorAreas[point.area].fId == 1)
+	{
+		return 10;
+	}
+	else
+	{
+		return 0;
+	}
+	return 0;
+/*	switch (vectorAreas[point.area].fId)
 	{
 	case 0:
 		return 0;
@@ -94,7 +103,7 @@ type MKR::func(Node point)
 		break;
 	}
 	return 0;
-
+	*/
 }
 
 void MKR::Areas()
@@ -104,17 +113,20 @@ void MKR::Areas()
 	vectorAreas.resize(countArea);
 
 	// x1 x2 y1 y2 
+	// область состоит из двух точек - (x1, y1) и (x2, y2) - лева€ нижн€€ и права€ верхн€€;
 	for (int currArea = 0; currArea < countArea; currArea++)
 	{
+		//ввод точке, л€мбды, гаммы и функции
 		in >> vectorAreas[currArea].x1 >> vectorAreas[currArea].x2
 			>> vectorAreas[currArea].y1 >> vectorAreas[currArea].y2
 			>> vectorAreas[currArea].lambda >> vectorAreas[currArea].gamma >> vectorAreas[currArea].fId;
 
+		// какие точки вход€т в область сетки - провер€етс€ по < и >
 		for (int b = 0; b < countY && vectorAreas[currArea].y2 >= vectorY[b]; )
 			if (vectorAreas[currArea].y1 <= vectorY[b])
 				for (int a = 0; a < countX && vectorAreas[currArea].x2 >= vectorX[a]; )
 					if (vectorAreas[currArea].x1 <= vectorX[a])
-						grid[b * countX + a].area = currArea;
+						grid[b * countX + a].area = currArea; //область точки (x, y) в сетке
 
 	}
 	in.close();
@@ -124,7 +136,7 @@ void MKR::Grid()
 {
 	ifstream in("Grid.txt");
 	vector<Area> vectorN;
-	type X, Y; //точки x и y, коэффициент разр€дки?
+	type X, Y; //точки x и y
 	int Nx, Ny; //количество разбиений
 
 	in >> countX >> countY;
@@ -139,23 +151,25 @@ void MKR::Grid()
 	//in >> vectorX[0] >> vectorY[0];
 	in >> vectorX[0] >> vectorY[0];
 
+	// —начала идут узлы x
 	for (int currCountX = 0; currCountX < countX - 1; )
 	{
 		//in >> X >> Nx >> kx;
+		// x, кол-во разбиений, коэф. разр€дки
 		in >> X >> Nx >> kx[currCountX];
-		double hx;
+		type hx;
 		if (kx[currCountX] == 1) // равномерна€ сетка
 		{
 			hx = (X - vectorX[currCountX]) / Nx; // коэффициент приращени€, получаем по формуле (1+1+1+...)
 			for (int p = 1; p < Nx;)
-				vectorX[currCountX + p] = vectorX[currCountX] + hx * p;
-			currCountX += Nx;
+				vectorX[currCountX + p] = vectorX[currCountX] + hx * p; //дл€ нахождени€ последующих h
+			currCountX += Nx; //идут через следующее разбиение
 		}
 		else // неравномерна€ сетка
 		{
 			hx = (X - vectorX[currCountX]) * (kx[currCountX] - 1) / (pow(kx[currCountX], Nx + 1) - 1); //геометричеса€прогресси€ (1+ kx + k2x + k3x...)
 			for (int p = 0; p < Nx - 1; currCountX++, p++)
-				vectorX[currCountX + 1] = vectorX[currCountX] + hx * pow(kx[currCountX], p);
+				vectorX[currCountX + 1] = vectorX[currCountX] + hx * pow(kx[currCountX], p); //дл€ нахождени€ последующих h
 			currCountX++;
 		}
 
@@ -166,19 +180,19 @@ void MKR::Grid()
 	for (int currCountY = 0; currCountY < countY - 1; )
 	{
 		in >> Y >> Ny >> ky[currCountY];
-		double hy;
+		type hy;
 		if (ky[currCountY] == 1)
 		{
 			hy = (Y - vectorY[currCountY]) / Ny; // коэффициент приращени€, получаем по формуле (1+1+1+...)
 			for (int p = 1; p < Ny; p++)
-				vectorY[currCountY + p] = vectorY[currCountY] + hy * p;
+				vectorY[currCountY + p] = vectorY[currCountY] + hy * p; //дл€ нахождени€ последующих h
 			currCountY += Ny;
 		}
 		else
 		{
-			hy = (Y - vectorY[currCountY]) * (ky[currCountY] - 1) / (pow(ky[currCountY], Ny + 1) - 1); //геометричеса€прогресси€ (1+ kx + k2x + k3x...)
+			hy = (Y - vectorY[currCountY]) * (ky[currCountY] - 1) / (pow(ky[currCountY], Ny + 1) - 1); //геометрическа€ прогресси€ (1+ kx + k2x + k3x...)
 			for (int p = 0; p < Ny - 1; currCountY++, p++)
-				vectorY[currCountY + 1] = vectorY[currCountY] + hy * pow(ky[currCountY], p);
+				vectorY[currCountY + 1] = vectorY[currCountY] + hy * pow(ky[currCountY], p); //дл€ нахождени€ последующих h
 			currCountY++;
 		}
 		vectorY[currCountY] = Y;
@@ -188,6 +202,7 @@ void MKR::Grid()
 	// сетка класса Node();
 	grid.resize(countY * countX);
 
+	//двумерна€ матрица через одномерную ? может лучше просто двумерную ???
 	for (int i = 0; i < countY; i++)
 		for (int j = 0; j < countX; j++)
 		{
@@ -204,6 +219,7 @@ void MKR::Boundaries()
 	in >> countArea;
 	vectorB1.resize(countArea);
 	type x1, x2, y1, y2;
+	// ”чЄт первых краевых - по границам
 	for (int currArea = 0; currArea < countArea; currArea++)
 	{
 		in >> x1 >> x2 >> y1 >> y2 >> boundId;
@@ -217,7 +233,7 @@ void MKR::Boundaries()
 			for (b = 0; b < countY && y1 != vectorY[b]; );
 			for (a = 0; a < countX && x2 >= vectorX[a]; )
 				if (x1 <= vectorX[a])
-					vectorB1[currArea].nodes.push_back(b * countX + a);
+					vectorB1[currArea].nodes.push_back(b * countX + a); //убираем из областей краевые точки
 		}
 		else
 			//если лини€ вертикальна€
@@ -227,7 +243,7 @@ void MKR::Boundaries()
 				for (a = 0; a < countX && x1 != vectorX[a]; );
 				for (b = 0; b < countY && y2 >= vectorY[b]; )
 					if (y1 <= vectorY[b])
-						vectorB1[currArea].nodes.push_back(b * countX + a);
+						vectorB1[currArea].nodes.push_back(b * countX + a); //убираем из областей краевые точки
 			}
 			else
 				printf_s("Not bound");
@@ -262,7 +278,7 @@ void MKR::Boundaries()
 	{
 		in >> x1 >> x2 >> y1 >> boundId;
 		vectorB2y[currArea].teta = boundId;
-		vectorB2y[currArea].nodes.reserve(countY * countX);
+		vectorB2y[currArea].nodes.reserve(countY * countX); //выделение пам€ти
 		int a, b;
 		for (b = 0; b < countY && y1 != vectorY[b]; );
 		for (a = 0; a < countX && x2 >= vectorX[a]; )
@@ -276,18 +292,24 @@ void MKR::Boundaries()
 
 }
 
+// ¬вод всех данных из файлов
 int MKR::input()
 {
 	// ввод данных по сетке    
 	//Vector vectorX, vectorY; // вектор x и y
+	// —етка
 	Grid();
+	// ќбласти
 	Areas();
+	//  раевые
 	Boundaries();
 	return 0;
 }
 
 int MKR::makeMatrix()
 {
+
+	// ƒиагональный формат - 5 диагоналей, каждый отдельный вектор
 	Aij.di.resize(grid.size());
 	Aij.u1.resize(grid.size() - 1);
 	Aij.l1.resize(grid.size() - 1);
@@ -315,6 +337,7 @@ int MKR::makeMatrix()
 	// блок с 5 диаг (верх/ниж границ не смотрим, боковые границы поправим в граничных услови€х)
 	for (int i = Aij.k + 2; i < grid.size() - 2 - Aij.k; i++)
 	{
+		// hx=x(i)-x(i-1), hy=y(i)-y(i-1)
 		type hx1 = grid[i].x - grid[i - 1].x;
 		type hx2 = grid[i + 1].x - grid[i].x;
 		type hy1 = grid[i].y - grid[i - Aij.k - 2].y;
@@ -326,6 +349,7 @@ int MKR::makeMatrix()
 		{
 			if (hx1 > 0 && hx2 > 0)
 			{
+				//формула с оператором лапласа
 				f[i] = func(grid[i]);
 				Aij.di[i] += curLambda * 2 / (hx1 * hx2) + curLambda * 2 / (hy1 * hy2) + vectorAreas[grid[i].area].gamma;
 				Aij.u1[i] += curLambda * -2 / (hx1 * (hx1 + hx2));

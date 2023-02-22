@@ -15,7 +15,7 @@ typedef vector<type> Vector;
 class Area
 {
 public:
-	type x1, x2, y1, y2;
-	int lambda, gamma, fId; // - функция 
+	type x1, x2, y1, y2; // ??? спорно очень
+	int lambda, gamma,fId; // - функция 
 };
 

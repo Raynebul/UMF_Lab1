@@ -45,6 +45,7 @@ public:
    type ResidualBlock(int i);
    Vector Ri_(int blocksize, int i);
    type FindAElement(int a1, int a2);
-   Vector LU_SOL(int i, int blocksize, Vector& Ri);*/
+   Vector LU_SOL(int i, int blocksize, Vector& Ri);
+   */
 };
 
