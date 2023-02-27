@@ -16,6 +16,6 @@ class Area
 {
 public:
 	type x1, x2, y1, y2; // ??? спорно очень
-	int lambda, gamma,fId; // - функция 
+	int lambda, gamma, fId; // - функция 
 };
 

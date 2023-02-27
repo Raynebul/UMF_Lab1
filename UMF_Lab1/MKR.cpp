@@ -122,9 +122,9 @@ void MKR::Areas()
 			>> vectorAreas[currArea].lambda >> vectorAreas[currArea].gamma >> vectorAreas[currArea].fId;
 
 		// какие точки входят в область сетки - проверяется по < и >
-		for (int b = 0; b < countY && vectorAreas[currArea].y2 >= vectorY[b]; )
+		for (int b = 0; b < countY && vectorAreas[currArea].y2 >= vectorY[b]; b++)
 			if (vectorAreas[currArea].y1 <= vectorY[b])
-				for (int a = 0; a < countX && vectorAreas[currArea].x2 >= vectorX[a]; )
+				for (int a = 0; a < countX && vectorAreas[currArea].x2 >= vectorX[a]; a++)
 					if (vectorAreas[currArea].x1 <= vectorX[a])
 						grid[b * countX + a].area = currArea; //область точки (x, y) в сетке
 
@@ -137,7 +137,7 @@ void MKR::Grid()
 	ifstream in("Grid.txt");
 	vector<Area> vectorN;
 	type X, Y; //точки x и y
-	int Nx, Ny; //количество разбиений
+	int Nx, Ny, kx, ky; //количество разбиений
 
 	in >> countX >> countY;
 
@@ -152,24 +152,24 @@ void MKR::Grid()
 	in >> vectorX[0] >> vectorY[0];
 
 	// Сначала идут узлы x
-	for (int currCountX = 0; currCountX < countX - 1; )
+	for (int currCountX = 0; currCountX < countX-1; )
 	{
 		//in >> X >> Nx >> kx;
 		// x, кол-во разбиений, коэф. разрядки
-		in >> X >> Nx >> kx[currCountX];
+		in >> X >> Nx >> kx;
 		type hx;
-		if (kx[currCountX] == 1) // равномерная сетка
+		if (kx == 1) // равномерная сетка
 		{
 			hx = (X - vectorX[currCountX]) / Nx; // коэффициент приращения, получаем по формуле (1+1+1+...)
-			for (int p = 1; p < Nx;)
+			for (int p = 1; p < Nx; p++)
 				vectorX[currCountX + p] = vectorX[currCountX] + hx * p; //для нахождения последующих h
 			currCountX += Nx; //идут через следующее разбиение
 		}
 		else // неравномерная сетка
 		{
-			hx = (X - vectorX[currCountX]) * (kx[currCountX] - 1) / (pow(kx[currCountX], Nx + 1) - 1); //геометричесаяпрогрессия (1+ kx + k2x + k3x...)
+			hx = (X - vectorX[currCountX]) * (kx - 1) / (pow(kx, Nx + 1) - 1); //геометричесаяпрогрессия (1+ kx + k2x + k3x...)
 			for (int p = 0; p < Nx - 1; currCountX++, p++)
-				vectorX[currCountX + 1] = vectorX[currCountX] + hx * pow(kx[currCountX], p); //для нахождения последующих h
+				vectorX[currCountX + 1] = vectorX[currCountX] + hx * pow(kx, p); //для нахождения последующих h
 			currCountX++;
 		}
 
@@ -177,11 +177,11 @@ void MKR::Grid()
 	}
 
 	// строим равномерную или неравномерную сетку
-	for (int currCountY = 0; currCountY < countY - 1; )
+	for (int currCountY = 0; currCountY < countY-1; )
 	{
-		in >> Y >> Ny >> ky[currCountY];
+		in >> Y >> Ny >> ky;
 		type hy;
-		if (ky[currCountY] == 1)
+		if (ky == 1)
 		{
 			hy = (Y - vectorY[currCountY]) / Ny; // коэффициент приращения, получаем по формуле (1+1+1+...)
 			for (int p = 1; p < Ny; p++)
@@ -190,9 +190,9 @@ void MKR::Grid()
 		}
 		else
 		{
-			hy = (Y - vectorY[currCountY]) * (ky[currCountY] - 1) / (pow(ky[currCountY], Ny + 1) - 1); //геометрическая прогрессия (1+ kx + k2x + k3x...)
+			hy = (Y - vectorY[currCountY]) * (ky - 1) / (pow(ky, Ny + 1) - 1); //геометрическая прогрессия (1+ kx + k2x + k3x...)
 			for (int p = 0; p < Ny - 1; currCountY++, p++)
-				vectorY[currCountY + 1] = vectorY[currCountY] + hy * pow(ky[currCountY], p); //для нахождения последующих h
+				vectorY[currCountY + 1] = vectorY[currCountY] + hy * pow(ky, p); //для нахождения последующих h
 			currCountY++;
 		}
 		vectorY[currCountY] = Y;
