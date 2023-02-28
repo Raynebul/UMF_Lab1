@@ -15,7 +15,7 @@ int MKR::sub(Vector& a, Vector& b) // b = a - b
 type MKR::norm(Vector& a) // норма корень квадратный из суммы квадратов
 {
 	type res = 0;
-	for (int i = 0; i < a.size();)
+	for (int i = 0; i < a.size(); i++)
 		res += a[i] * a[i];
 	res = sqrt(res);
 	return res;
@@ -59,10 +59,11 @@ type MKR::step(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& b
 	return t;
 }
 
-int MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0,type& eps, type& w, int& N, int& m, int& max_iter)
+// Работает нормально (проблема с диагональю - там короче x0[6] получается 0, и затем следующие x получаются nan(ind)
+type MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0,type& eps, type& w, int& N, int& m, int& max_iter)
 {
 	type delta = 1;  // относительная невязка
-	for (int k = 0; k < max_iter && delta >= eps; k++)   // счетчик итераций
+	for (int k = 0; k < max_iter || delta >= eps; k++)   // счетчик итераций
 	{
 		delta = 0;
 		for (int i = 0; i < N; i++)
@@ -78,7 +79,7 @@ int MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vec
 
 		delta = sqrt(delta) / norm(f);   // относительная невязка      
 	}
-	return 0;
+	return delta;
 }
 
 type MKR::func(Node point)
@@ -230,8 +231,8 @@ void MKR::Boundaries()
 		if (y1 == y2)
 		{
 			int a, b;
-			for (b = 0; b < countY && y1 != vectorY[b]; );
-			for (a = 0; a < countX && x2 >= vectorX[a]; )
+			for (b = 0; b < countY && y1 != vectorY[b]; b++);
+			for (a = 0; a < countX && x2 >= vectorX[a]; a++)
 				if (x1 <= vectorX[a])
 					vectorB1[currArea].nodes.push_back(b * countX + a); //убираем из областей краевые точки
 		}
@@ -240,8 +241,8 @@ void MKR::Boundaries()
 			if (x1 == x2)
 			{
 				int a, b;
-				for (a = 0; a < countX && x1 != vectorX[a]; );
-				for (b = 0; b < countY && y2 >= vectorY[b]; )
+				for (a = 0; a < countX && x1 != vectorX[a]; a++);
+				for (b = 0; b < countY && y2 >= vectorY[b]; b++)
 					if (y1 <= vectorY[b])
 						vectorB1[currArea].nodes.push_back(b * countX + a); //убираем из областей краевые точки
 			}
@@ -315,7 +316,7 @@ int MKR::makeMatrix()
 	Aij.l1.resize(grid.size() - 1);
 	Aij.u2.resize(grid.size() - 2 - Aij.k);
 	Aij.l2.resize(grid.size() - 2 - Aij.k);
-	f.resize(grid.size());
+	f.resize(grid.size()); // наш b
 
 	f[0] = func(grid[0]);
 
@@ -352,10 +353,10 @@ int MKR::makeMatrix()
 				//формула с оператором лапласа
 				f[i] = func(grid[i]);
 				Aij.di[i] += curLambda * 2 / (hx1 * hx2) + curLambda * 2 / (hy1 * hy2) + vectorAreas[grid[i].area].gamma;
-				Aij.u1[i] += curLambda * -2 / (hx1 * (hx1 + hx2));
+				Aij.u1[i] += curLambda * -2 / (hx2 * (hx1 + hx2));
 				Aij.l1[i - 1] += curLambda * -2 / (hx1 * (hx1 + hx2));
-				Aij.u2[i] += curLambda * -2 / (hx1 * (hx1 + hx2));
-				Aij.l2[i - Aij.k - 2] += curLambda * -2 / (hx1 * (hx1 + hx2));
+				Aij.u2[i] += curLambda * -2 / (hy2 * (hy1 + hy2));
+				Aij.l2[i - Aij.k - 2] += curLambda * -2 / (hy1 * (hy1 + hy2));
 			}
 		}
 		else
@@ -466,11 +467,17 @@ int MKR::makeMatrix()
 
 int MKR::solve(string filename)
 {
-	int N = grid.size(), m = Aij.k, max_iter = 1000;
+	int N = grid.size(), m = Aij.k, max_iter = 100;
 	type W = 1, eps = 1e-15;
 	Vector u(N);
 
-	int temp = GaussZeidel(Aij.l1, Aij.l2, Aij.u1, Aij.u2, Aij.di, f, u, eps, W, N, m, max_iter);
+	type temp = GaussZeidel(Aij.l1, Aij.l2, Aij.u1, Aij.u2, Aij.di, f, u, eps, W, N, m, max_iter);
+	ofstream out(filename);
+	for (int i = 0; i < u.size(); i++)
+	{
+		out << u[i] << endl;
+	}
+
 	return temp;
 }
 

@@ -33,7 +33,7 @@ public:
    type step(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& b, Vector& x0, Vector& x, type w,
       int& N, int& m, Vector& z, int i);
    // Блочная релаксация с блоком 1x1
-   int GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0, type& eps, type& w, int& N, int& m, int& max_iter);
+   type GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0, type& eps, type& w, int& N, int& m, int& max_iter);
    type teta(Node point, int idBound);
    int solve(string filename);
 
