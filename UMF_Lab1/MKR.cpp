@@ -84,7 +84,7 @@ type MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Ve
 
 type MKR::func(Node point)
 {
-	if (vectorAreas[point.area].fId == 1)
+	/*if (vectorAreas[point.area].fId == 1)
 	{
 		return 10;
 	}
@@ -92,19 +92,20 @@ type MKR::func(Node point)
 	{
 		return 0;
 	}
-	return 0;
-/*	switch (vectorAreas[point.area].fId)
+	return 0;*/
+	switch (vectorAreas[point.area].fId)
 	{
 	case 0:
 		return 0;
 	case 1:
 		return 10; // меняем функцию
+	case 2:
+		return 10;
 	default:
 		cout << "Something in func get wrong" << endl;
 		break;
 	}
 	return 0;
-	*/
 }
 
 void MKR::Areas()
@@ -322,50 +323,56 @@ int MKR::makeMatrix()
 
 	// заполнить фиктивные узлы, если они по верхней/нижней границе
 	for (int i = 0; i < Aij.k + 2; i++)
-		if (!vectorAreas[grid[i].area].lambda)
+		//if (!vectorAreas[grid[i].area].lambda)
 		{
 			f[i] = 0;
 			Aij.di[i] = 1;
 		}
 
 	for (int i = grid.size() - 2 - Aij.k; i < grid.size(); i++)
-		if (!vectorAreas[grid[i].area].lambda)
+		//if (!vectorAreas[grid[i].area].lambda)
 		{
 			f[i] = 0;
 			Aij.di[i] = 1;
 		}
 
 	// блок с 5 диаг (верх/ниж границ не смотрим, боковые границы поправим в граничных условиях)
-	for (int i = Aij.k + 2; i < grid.size() - 2 - Aij.k; i++)
+	for (int s = Aij.k + 3; s < grid.size() - 2 - Aij.k; s++)
 	{
 		// hx=x(i)-x(i-1), hy=y(i)-y(i-1)
-		type hx1 = grid[i].x - grid[i - 1].x;
-		type hx2 = grid[i + 1].x - grid[i].x;
-		type hy1 = grid[i].y - grid[i - Aij.k - 2].y;
-		type hy2 = grid[i + Aij.k + 2].y - grid[i].y;
-		type curLambda = vectorAreas[grid[i].area].lambda;
+		type hx1 = grid[s].x - grid[s - 1].x;
+		type hx2 = grid[s + 1].x - grid[s].x;
+		type hy1 = grid[s].y - grid[s - Aij.k - 2].y;
+		type hy2 = grid[s + Aij.k + 2].y - grid[s].y;
+		type curLambda = vectorAreas[grid[s].area].lambda;
 
 		// если разность отрицательна, взят боковой граничный узел как текущий
-		if (curLambda)
+		//if (curLambda && !(s % Aij.k+1 == 0 || Aij.k + 1 == 1))
+		if (!(s % Aij.k + 1 == 0 || Aij.k + 1 == 1))
 		{
 			if (hx1 > 0 && hx2 > 0)
 			{
 				//формула с оператором лапласа
-				f[i] = func(grid[i]);
-				Aij.di[i] += curLambda * 2 / (hx1 * hx2) + curLambda * 2 / (hy1 * hy2) + vectorAreas[grid[i].area].gamma;
-				Aij.u1[i] += curLambda * -2 / (hx2 * (hx1 + hx2));
-				Aij.l1[i - 1] += curLambda * -2 / (hx1 * (hx1 + hx2));
-				Aij.u2[i] += curLambda * -2 / (hy2 * (hy1 + hy2));
-				Aij.l2[i - Aij.k - 2] += curLambda * -2 / (hy1 * (hy1 + hy2));
+				f[s] = func(grid[s]);
+				Aij.di[s] += curLambda * 2 / (hx1 * hx2) + curLambda * 2 / (hy1 * hy2) + vectorAreas[grid[s].area].gamma;
+				Aij.u1[s] += curLambda * -2 / (hx2 * (hx1 + hx2));
+				Aij.l1[s - 1] += curLambda * -2 / (hx1 * (hx1 + hx2));
+				Aij.u2[s] += curLambda * -2 / (hy2 * (hy1 + hy2));
+				Aij.l2[s - Aij.k - 2] += curLambda * -2 / (hy1 * (hy1 + hy2));
+			}
+			else
+			{
+				f[s] = 0;
+				Aij.di[s] = 1;
 			}
 		}
 		else
 		{
-			f[i] = 0;
-			Aij.di[i] = 1;
+			f[s] = 0;
+			Aij.di[s] = 1;
 		}
-
-		f[grid.size() - 1] = func(grid[grid.size() - 1]);
+	}
+		//f[grid.size() - 1] = func(grid[grid.size() - 1]);
 
 		// краевые 2
 		//   // ОХ
@@ -461,8 +468,6 @@ int MKR::makeMatrix()
 			}
 		}
 		return 0;
-
-	}
 }
 
 int MKR::solve(string filename)
