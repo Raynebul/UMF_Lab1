@@ -448,12 +448,18 @@ int MKR::makeMatrix()
 
 				// занулить остальные элементы строки
 				// проверить, есть ли эти элементы на строке
-				if (v % countX != (Aij.k + 1))
-					Aij.u1[v] = 0;
-
-				if (v % (Aij.k + 2) != 0)
-					Aij.l1[v - 1] = 0;
-
+				if (v % countX != 1)
+				{
+					type h = grid[v + 1].y - grid[v].y;
+					Aij.di[v] = -1 / h;
+					Aij.u1[v] = 1 / h;
+				}
+				if (v % countX != 0)
+				{
+					type h = grid[v].y - grid[v - 1].y;
+					Aij.di[v] = 1 / h;
+					Aij.l1[v - 1] = -1/h;
+				}
 				if (v < grid.size() - countX && vectorAreas[grid[v + countX].area].lambda != 0) // 																			есть узел выше не фиктивный
 				{
 					type h = grid[v + countX].y - grid[v].y;
