@@ -29,7 +29,18 @@ type MKR::teta(Node point, int idBound)
 		return 0;
 	case 1: // в соответствии с тестом
 		return 10;
-
+	case 2:
+		return point.x + point.y;
+/*	case 3:
+		return pow(point.x, 2) + pow(point.y, 2); */
+	case 3:
+		return 10;
+	case 4:
+		return pow(point.x, 3) + pow(point.y, 3);
+	case 5:
+		return point.x * point.y;
+	case 6:
+		return cos(point.x);
 	default:
 		cout << "Something in teta get wrong" << endl;
 		break;
@@ -45,15 +56,15 @@ type MKR::step(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& b
 
 	// ниже
 	if (i > 0)
-		t += l1[i - 1] * z[i - 1];
+		t += l1[i-1] * z[i-1];
 	if (i > m + 1)
-		t += l2[i - m - 2] * z[i - m - 2];
+		t += l2[i-m-2] * z[i-m-2];
 
 	// выше
 	if (i < N - 1)
-		t += u1[i] * x0[i + 1];
+		t += u1[i] * x0[i+1];
 	if (i < N - m - 2)
-		t += u2[i] * x0[i + m + 2];
+		t += u2[i] * x0[i+m+2];
 
 	t = b[i] - t;
 	return t;
@@ -100,7 +111,17 @@ type MKR::func(Node point)
 	case 1:
 		return 10; // меняем функцию
 	case 2:
+		return point.x + point.y;
+	/*case 3:
+		return pow(point.x, 2) + pow(point.y, 2);*/
+	case 3:
 		return 10;
+	case 4:
+		return pow(point.x, 3) + pow(point.y, 3);
+	case 5:
+		return point.x*point.y;
+	case 6:
+		return cos(point.x);
 	default:
 		cout << "Something in func get wrong" << endl;
 		break;
@@ -257,15 +278,15 @@ void MKR::Boundaries()
 	in >> countArea;
 	vectorB2x.resize(countArea);
 
-	for (int currArea = 0; currArea < countArea; )
+	for (int currArea = 0; currArea < countArea; currArea++)
 	{
 		in >> x1 >> y1 >> y2 >> boundId;
 		vectorB2x[currArea].teta = boundId;
 		vectorB2x[currArea].nodes.reserve(countY * countX);
 
 		int a, b;
-		for (a = 0; a < countX && x1 != vectorX[a]; );
-		for (b = 0; b < countY && y2 >= vectorY[b]; )
+		for (a = 0; a < countX && x1 != vectorX[a]; a++);
+		for (b = 0; b < countY && y2 >= vectorY[b]; b++)
 			if (y1 <= vectorY[b])
 				vectorB2x[currArea].nodes.push_back(b * countX + a);
 	}
@@ -276,14 +297,14 @@ void MKR::Boundaries()
 	in >> countArea;
 	vectorB2y.resize(countArea);
 
-	for (int currArea = 0; currArea < countArea; )
+	for (int currArea = 0; currArea < countArea; currArea++)
 	{
 		in >> x1 >> x2 >> y1 >> boundId;
 		vectorB2y[currArea].teta = boundId;
 		vectorB2y[currArea].nodes.reserve(countY * countX); //выделение памяти
 		int a, b;
-		for (b = 0; b < countY && y1 != vectorY[b]; );
-		for (a = 0; a < countX && x2 >= vectorX[a]; )
+		for (b = 0; b < countY && y1 != vectorY[b]; b++);
+		for (a = 0; a < countX && x2 >= vectorX[a]; a++)
 			if (x1 <= vectorX[a])
 				vectorB2y[currArea].nodes.push_back(b * countX + a);
 	}
@@ -315,21 +336,21 @@ int MKR::makeMatrix()
 	Aij.di.resize(grid.size());
 	Aij.u1.resize(grid.size() - 1);
 	Aij.l1.resize(grid.size() - 1);
-	Aij.u2.resize(grid.size() - 2 - Aij.k);
-	Aij.l2.resize(grid.size() - 2 - Aij.k);
+	Aij.u2.resize(grid.size() - countX); // k = CountX-2
+	Aij.l2.resize(grid.size() - countX);
 	f.resize(grid.size()); // наш b
 
 	f[0] = func(grid[0]);
 
 	// заполнить фиктивные узлы, если они по верхней/нижней границе
-	for (int i = 0; i < Aij.k + 2; i++)
+	for (int i = 0; i < countX+1; i++)
 		//if (!vectorAreas[grid[i].area].lambda)
 		{
 			f[i] = 0;
 			Aij.di[i] = 1;
 		}
 
-	for (int i = grid.size() - 2 - Aij.k; i < grid.size(); i++)
+	for (int i = grid.size() - countX-1; i < grid.size(); i++)
 		//if (!vectorAreas[grid[i].area].lambda)
 		{
 			f[i] = 0;
@@ -337,18 +358,18 @@ int MKR::makeMatrix()
 		}
 
 	// блок с 5 диаг (верх/ниж границ не смотрим, боковые границы поправим в граничных условиях)
-	for (int s = Aij.k + 3; s < grid.size() - 2 - Aij.k; s++)
+	for (int s = countX +1; s < grid.size() - 1 - countX; s++)
 	{
 		// hx=x(i)-x(i-1), hy=y(i)-y(i-1)
 		type hx1 = grid[s].x - grid[s - 1].x;
 		type hx2 = grid[s + 1].x - grid[s].x;
-		type hy1 = grid[s].y - grid[s - Aij.k - 2].y;
-		type hy2 = grid[s + Aij.k + 2].y - grid[s].y;
+		type hy1 = grid[s].y - grid[s - Aij.k - 3].y;
+		type hy2 = grid[s + countX].y - grid[s].y;
 		type curLambda = vectorAreas[grid[s].area].lambda;
 
 		// если разность отрицательна, взят боковой граничный узел как текущий
 		//if (curLambda && !(s % Aij.k+1 == 0 || Aij.k + 1 == 1))
-		if (!(s % Aij.k + 1 == 0 || Aij.k + 1 == 1))
+		if (grid[s].area != 0)
 		{
 			if (hx1 > 0 && hx2 > 0)
 			{
@@ -358,18 +379,26 @@ int MKR::makeMatrix()
 				Aij.u1[s] += curLambda * -2 / (hx2 * (hx1 + hx2));
 				Aij.l1[s - 1] += curLambda * -2 / (hx1 * (hx1 + hx2));
 				Aij.u2[s] += curLambda * -2 / (hy2 * (hy1 + hy2));
-				Aij.l2[s - Aij.k - 2] += curLambda * -2 / (hy1 * (hy1 + hy2));
+				Aij.l2[s - countX] += curLambda * -2 / (hy1 * (hy1 + hy2));
 			}
 			else
 			{
 				f[s] = 0;
 				Aij.di[s] = 1;
+				Aij.u1[s] = 0;
+				Aij.l1[s-1] = 0;
+				Aij.u2[s] = 0;
+				Aij.l2[s - countX] = 0;
 			}
 		}
 		else
 		{
 			f[s] = 0;
 			Aij.di[s] = 1;
+			Aij.u1[s] = 0;
+			Aij.l1[s - 1] = 0;
+			Aij.u2[s] = 0;
+			Aij.l2[s - countX] = 0;
 		}
 	}
 		//f[grid.size() - 1] = func(grid[grid.size() - 1]);
@@ -390,7 +419,7 @@ int MKR::makeMatrix()
 					Aij.u1[v] = 1 / h;
 					Aij.di[v] = -1 / h;
 
-					if (v % (Aij.k + 2) != 0) // если и левее узел
+					if (v % (countX) != 0) // если и левее узел
 						Aij.l1[v - 1] = 0;
 				}
 				else
@@ -402,10 +431,10 @@ int MKR::makeMatrix()
 						Aij.l1[v - 1] = -1 / h;
 					}
 
-				if (v < grid.size() - Aij.k - 2)
+				if (v < grid.size() - countX)
 					Aij.u2[v] = 0;
-				if (v >= Aij.k + 2)
-					Aij.l2[v - Aij.k - 2] = 0;
+				if (v >= countX)
+					Aij.l2[v - countX] = 0;
 			}
 
 		//   // ОУ
@@ -419,25 +448,25 @@ int MKR::makeMatrix()
 
 				// занулить остальные элементы строки
 				// проверить, есть ли эти элементы на строке
-				if (v % (Aij.k + 2) != (Aij.k + 1))
+				if (v % countX != (Aij.k + 1))
 					Aij.u1[v] = 0;
 
 				if (v % (Aij.k + 2) != 0)
 					Aij.l1[v - 1] = 0;
 
-				if (v < grid.size() - Aij.k - 2 && vectorAreas[grid[v + Aij.k + 2].area].lambda != 0) // 																			есть узел выше не фиктивный
+				if (v < grid.size() - countX && vectorAreas[grid[v + countX].area].lambda != 0) // 																			есть узел выше не фиктивный
 				{
-					type h = grid[v + Aij.k + 2].y - grid[v].y;
+					type h = grid[v + countX].y - grid[v].y;
 					Aij.u2[v] = 1 / h;
 					Aij.di[v] = -1 / h;
-					if (v >= Aij.k + 2)
-						Aij.l2[v - Aij.k - 2] = 0;
+					if (v >= countX)
+						Aij.l2[v - countX] = 0;
 				}
 				else
-					if (v >= Aij.k + 2)
+					if (v >= countX)
 					{
-						type h = grid[v].y - grid[v - Aij.k - 2].y;
-						Aij.l2[v - Aij.k - 2] = -1 / h;
+						type h = grid[v].y - grid[v - countX].y;
+						Aij.l2[v - countX] = -1 / h;
 						Aij.di[v] = 1 / h;
 					}
 			}
@@ -454,17 +483,17 @@ int MKR::makeMatrix()
 
 				// занулить остальные элементы строки
 				// проверить, есть ли эти элементы на строке
-				if (v % (Aij.k + 2) != (Aij.k + 1))
+				if (v % (countX) != (Aij.k + 1))
 					Aij.u1[v] = 0;
 
-				if (v % (Aij.k + 2) != 0)
+				if (v % countX != 0)
 					Aij.l1[v - 1] = 0;
 
-				if (v < grid.size() - Aij.k - 2)
+				if (v < grid.size() - countX)
 					Aij.u2[v] = 0;
 
-				if (v >= Aij.k + 2)
-					Aij.l2[v - Aij.k - 2] = 0;
+				if (v >= countX)
+					Aij.l2[v - countX] = 0;
 			}
 		}
 		return 0;
@@ -480,7 +509,7 @@ int MKR::solve(string filename)
 	ofstream out(filename);
 	for (int i = 0; i < u.size(); i++)
 	{
-		out << u[i] << endl;
+		out << setprecision(21) << u[i] << endl;
 	}
 
 	return temp;
