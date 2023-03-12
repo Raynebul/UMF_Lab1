@@ -210,10 +210,10 @@ void MKR::Grid()
 		}
 		else // неравномерная сетка
 		{
-			hx = (X - vectorX[currCountX]) * (kx - 1) / (pow(kx, Nx + 1) - 1); //геометричесаяпрогрессия (1+ kx + k2x + k3x...)
-			for (int p = 0; p < Nx - 1; currCountX++, p++)
-				vectorX[currCountX + 1] = vectorX[currCountX] + hx * pow(kx, p); //для нахождения последующих h
-			currCountX++;
+			hx = (X - vectorX[currCountX]) * (kx - 1) / (pow(kx, Nx) - 1); //геометричесаяпрогрессия (1+ kx + k2x + k3x...)
+			for (int p = 0; p < Nx; p++)
+				vectorX[currCountX + 1 + p] = vectorX[currCountX] + hx * pow(kx, p); //для нахождения последующих h
+			currCountX+=Nx+1;
 		}
 
 		vectorX[currCountX] = X;
