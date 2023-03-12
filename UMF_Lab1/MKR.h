@@ -23,6 +23,7 @@ public:
    Vector f;
    type func(Node point);
    MKR();
+   type u(Node point, int idBound);
    int sub(Vector& a, Vector& b);
    type norm(Vector& a);
    void Boundaries();

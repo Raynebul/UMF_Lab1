@@ -31,12 +31,10 @@ type MKR::teta(Node point, int idBound)
 		return 10;
 	case 2:
 		return point.x + point.y;
-/*	case 3:
-		return pow(point.x, 2) + pow(point.y, 2); */
 	case 3:
-		return 10;
+		return cos(point.x);
 	case 4:
-		return pow(point.x, 3) + pow(point.y, 3);
+		return pow(point.x, 2) + pow(point.y, 2);
 	case 5:
 		return point.x * point.y;
 	case 6:
@@ -47,6 +45,64 @@ type MKR::teta(Node point, int idBound)
 	}
 	return 0;
 
+}
+
+type MKR::func(Node point)
+{
+	switch (vectorAreas[point.area].fId)
+	{
+	case 0:
+		return 0;
+	case 1:
+		return 10; // меняем функцию
+	case 2:
+		return point.x + point.y;
+	case 3:
+		return point.x*point.x+point.y*point.y-4;
+	case 4:
+		return pow(point.x, 3) + pow(point.y, 3) -6*point.x - 6*point.y;
+	case 5:
+		return pow(point.x, 4) + pow(point.y, 4) - 12 * point.x*point.x - 12 * point.y * point.y;
+	case 6:
+		return point.x * point.y;
+	case 7:
+		return point.x* point.x * point.y - 2*point.y;
+	case 8:
+		return 2*cos(point.x);
+	default:
+		cout << "Something in func get wrong" << endl;
+		break;
+	}
+	return 0;
+}
+
+type MKR::u(Node point, int idBound)
+{
+	switch (idBound)
+	{
+	case 0:
+		return 0;
+	case 1:
+		return 10; // меняем функцию
+	case 2:
+		return point.x + point.y;
+	case 3:
+		return point.x * point.x + point.y * point.y;
+	case 4:
+		return pow(point.x, 3) + pow(point.y, 3);
+	case 5:
+		return pow(point.x, 4) + pow(point.y, 4);
+	case 6:
+		return point.x*point.y;
+	case 7:
+		return point.x* point.x * point.y;
+	case 8:
+		return cos(point.x);
+	default:
+		cout << "Something in func get wrong" << endl;
+		break;
+	}
+	return 0;
 }
 
 type MKR::step(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& b, Vector& x0, Vector& x, type w, int& N, int& m, Vector& z, int i)
@@ -91,42 +147,6 @@ type MKR::GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Ve
 		delta = sqrt(delta) / norm(f);   // относительная невязка      
 	}
 	return delta;
-}
-
-type MKR::func(Node point)
-{
-	/*if (vectorAreas[point.area].fId == 1)
-	{
-		return 10;
-	}
-	else
-	{
-		return 0;
-	}
-	return 0;*/
-	switch (vectorAreas[point.area].fId)
-	{
-	case 0:
-		return 0;
-	case 1:
-		return 10; // меняем функцию
-	case 2:
-		return point.x + point.y;
-	/*case 3:
-		return pow(point.x, 2) + pow(point.y, 2);*/
-	case 3:
-		return 10;
-	case 4:
-		return pow(point.x, 3) + pow(point.y, 3);
-	case 5:
-		return point.x*point.y;
-	case 6:
-		return cos(point.x);
-	default:
-		cout << "Something in func get wrong" << endl;
-		break;
-	}
-	return 0;
 }
 
 void MKR::Areas()
@@ -485,7 +505,7 @@ int MKR::makeMatrix()
 			{
 				int v = vectorB1[i].nodes[j]; // глобальный номер текущего узла
 				Aij.di[v] = 1; // 1 на главной
-				f[v] = teta(grid[v], vectorB1[i].teta);
+				f[v] = u(grid[v], vectorB1[i].teta);
 
 				// занулить остальные элементы строки
 				// проверить, есть ли эти элементы на строке
