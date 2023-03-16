@@ -36,6 +36,8 @@ public:
    // Блочная релаксация с блоком 1x1
    type GaussZeidel(Vector l1, Vector l2, Vector u1, Vector u2, Vector& di, Vector& f, Vector& x0, type& eps, type& w, int& N, int& m, int& max_iter);
    type teta(Node point, int idBound);
+   type tetaX(Node point, int idBound);
+   type tetaY(Node point, int idBound);
    int solve(string filename);
 
    /*

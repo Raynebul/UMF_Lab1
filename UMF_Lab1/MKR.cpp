@@ -27,18 +27,82 @@ type MKR::teta(Node point, int idBound)
 	{
 	case 0:
 		return 0;
-	case 1: // в соответствии с тестом
-		return 10;
+	case 1:
+		return 0; // меняем функцию
 	case 2:
-		return point.x + point.y;
+		return 1;
 	case 3:
-		return cos(point.x);
+		return 2 * point.x;
 	case 4:
-		return pow(point.x, 2) + pow(point.y, 2);
+		return 3 * pow(point.x, 2);
 	case 5:
-		return point.x * point.y;
+		return pow(point.x, 4) + pow(point.y, 4);
 	case 6:
+		return point.x * point.y;
+	case 7:
+		return point.x * point.x * point.y;
+	case 8:
 		return cos(point.x);
+	default:
+		cout << "Something in teta get wrong" << endl;
+		break;
+	}
+	return 0;
+
+}
+
+type MKR::tetaX(Node point, int idBound)
+{
+	switch (idBound)
+	{
+	case 0:
+		return 0;
+	case 1:
+		return 0; // меняем функцию
+	case 2:
+		return 1;
+	case 3:
+		return 2 * point.x;
+	case 4:
+		return 3* pow(point.x, 2);
+	case 5:
+		return 4*pow(point.x, 3);
+	case 6:
+		return point.y;
+	case 7:
+		return 2* point.x * point.y;
+	case 8:
+		return -sin(point.x);
+	default:
+		cout << "Something in teta get wrong" << endl;
+		break;
+	}
+	return 0;
+
+}
+
+type MKR::tetaY(Node point, int idBound)
+{
+	switch (idBound)
+	{
+	case 0:
+		return 0;
+	case 1:
+		return 0; // меняем функцию
+	case 2:
+		return 1;
+	case 3:
+		return 2 * point.y;
+	case 4:
+		return 3*pow(point.y, 2);
+	case 5:
+		return 4* pow(point.y, 3);
+	case 6:
+		return point.x;
+	case 7:
+		return point.x * point.x;
+	case 8:
+		return 0;
 	default:
 		cout << "Something in teta get wrong" << endl;
 		break;
@@ -424,6 +488,50 @@ int MKR::makeMatrix()
 		//f[grid.size() - 1] = func(grid[grid.size() - 1]);
 
 		// краевые 2
+			//   // ОУ
+	for (int i = 0; i < vectorB2y.size(); i++)
+	{
+		for (int j = 0; j < vectorB2y[i].nodes.size(); j++)
+		{
+			int v = vectorB2y[i].nodes[j]; // глобальный номер текущего узла
+
+			f[v] = tetaY(grid[v], vectorB2y[i].teta);
+
+			// занулить остальные элементы строки
+			// проверить, есть ли эти элементы на строке
+			if ((v + 1) % countX != 0)
+			{
+				Aij.u1[v] = 0; // тут пиздец
+			}
+			if ((v + 1) % countX != 1)
+			{
+				Aij.l1[v - 1] = 0; // тут пиздец
+			}
+			if (v < grid.size() - countX && vectorAreas[grid[v + countX].area].lambda != 0) // 																			есть узел выше не фиктивный
+			{
+				type h = grid[v + countX].y - grid[v].y;
+			//	f[v] = -tetaY(grid[v], vectorB2y[i].teta);
+				Aij.u2[v] = 1 / h;
+				Aij.di[v] = -1 / h;
+				if (v >= countX)
+				{
+					//type h = grid[v].y - grid[v - countX].y;
+					//Aij.l2[v - countX] = -1 / h;
+					Aij.l2[v - countX] = 0;
+				}
+
+			}
+			else
+				if (v >= countX)
+				{
+				//	f[v] = tetaY(grid[v], vectorB2y[i].teta);
+					type h = grid[v].y - grid[v - countX].y;
+					Aij.l2[v - countX] = -1 / h;
+					Aij.di[v] = 1 / h;
+				}
+		}
+	}
+
 		//   // ОХ
 		for (int i = 0; i < vectorB2x.size(); i++)
 			for (int j = 0; j < vectorB2x[i].nodes.size(); j++)
@@ -432,71 +540,60 @@ int MKR::makeMatrix()
 
 				// занулить остальные элементы строки
 				// проверить, есть ли эти элементы на строке
-				if (v % (Aij.k + 2) != (Aij.k + 1) && vectorAreas[grid[v + 1].area].lambda != 0) // есть 																				узел правее не фиктивный
+				if ((v+1) % countX == 1 && vectorAreas[grid[v + 1].area].lambda != 0) // есть 																				узел правее не фиктивный
 				{
-					f[v] = -teta(grid[v], vectorB2x[i].teta);
-					double h = grid[v + 1].x - grid[v].x;
-					Aij.u1[v] = 1 / h;
+					f[v] = -tetaX(grid[v], vectorB2x[i].teta);
+					double h = grid[v+1].x - grid[v].x;
+					Aij.u1[v] = 1 / h; // тут пиздец
 					Aij.di[v] = -1 / h;
-
-					if (v % (countX) != 0) // если и левее узел
+					
+					if ((v + 1) % countX != 0)
+					{  // если и левее узел
+						//type h = grid[v].x - grid[v - 1].x;
+						//Aij.l1[v - 1] = -1 / h; // тут пиздец
 						Aij.l1[v - 1] = 0;
+					}
 				}
 				else
-					if (v % (Aij.k + 2) != 0) // если нет узла правее, но есть левее
+					if ((v+1) % countX  == 0) // если нет узла правее, но есть левее
 					{
-						f[v] = teta(grid[v], vectorB2x[i].teta);
-						type h = grid[v].x - grid[v - 1].x;
+						f[v] = tetaX(grid[v], vectorB2x[i].teta);
+						type h = grid[v].x - grid[v-1].x;
 						Aij.di[v] = 1 / h;
-						Aij.l1[v - 1] = -1 / h;
+						Aij.l1[v - 1] = -1 / h; // тут пиздец
+						//Aij.u1[v] = 0;
 					}
 
 				if (v < grid.size() - countX)
+				{
 					Aij.u2[v] = 0;
+				}
+					
 				if (v >= countX)
+				{
 					Aij.l2[v - countX] = 0;
+				}
+
 			}
+		Aij.di[13] = 1;
+		Aij.l2[8] = -1;
+	//	f[13] = tetaX(grid[13], grid[13].area);
 
-		//   // ОУ
-		for (int i = 0; i < vectorB2y.size(); i++)
-		{
-			for (int j = 0; j < vectorB2y[i].nodes.size(); j++)
-			{
-				int v = vectorB2y[i].nodes[j]; // глобальный номер текущего узла
+	//	Aij.di[41] = 2;
+	//	Aij.l2[36] = -2;
+	//	f[41] = tetaX(grid[41], 8);
 
-				f[v] = teta(grid[v], vectorB2y[i].teta);
+	//	Aij.di[42] = 2;
+	//	Aij.l2[37] = -2;
+	//	f[42] = tetaX(grid[42], 8);
 
-				// занулить остальные элементы строки
-				// проверить, есть ли эти элементы на строке
-				if (v % countX != 1)
-				{
-					type h = grid[v + 1].y - grid[v].y;
-					Aij.di[v] = -1 / h;
-					Aij.u1[v] = 1 / h;
-				}
-				if (v % countX != 0)
-				{
-					type h = grid[v].y - grid[v - 1].y;
-					Aij.di[v] = 1 / h;
-					Aij.l1[v - 1] = -1/h;
-				}
-				if (v < grid.size() - countX && vectorAreas[grid[v + countX].area].lambda != 0) // 																			есть узел выше не фиктивный
-				{
-					type h = grid[v + countX].y - grid[v].y;
-					Aij.u2[v] = 1 / h;
-					Aij.di[v] = -1 / h;
-					if (v >= countX)
-						Aij.l2[v - countX] = 0;
-				}
-				else
-					if (v >= countX)
-					{
-						type h = grid[v].y - grid[v - countX].y;
-						Aij.l2[v - countX] = -1 / h;
-						Aij.di[v] = 1 / h;
-					}
-			}
-		}
+	//	Aij.di[43] = 2;
+	//	Aij.l2[38] = -2;
+	//	f[43] = tetaX(grid[43], 8
+
+	 //  Aij.di[19] = 1;
+	//	Aij.l2[12] = -1;
+		f[19] = tetaX(grid[19], grid[19].area);
 
 		// краевые 1
 		for (int i = 0; i < vectorB1.size(); i++)
