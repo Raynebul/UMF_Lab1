@@ -244,8 +244,8 @@ void MKR::Grid()
 	ifstream in("Grid.txt");
 	vector<Area> vectorN;
 	type X, Y; //точки x и y
-	int Nx, Ny, kx, ky; //количество разбиений
-
+	int Nx, Ny; //количество разбиений
+	type kx, ky;
 	in >> countX >> countY;
 
 	//vectorX.resize(countX); // все x
@@ -274,10 +274,16 @@ void MKR::Grid()
 		}
 		else // неравномерная сетка
 		{
+			// = sqrt(kx);
+			//kx
 			hx = (X - vectorX[currCountX]) * (kx - 1) / (pow(kx, Nx) - 1); //геометричесаяпрогрессия (1+ kx + k2x + k3x...)
 			for (int p = 0; p < Nx; p++)
 				vectorX[currCountX + 1 + p] = vectorX[currCountX] + hx * pow(kx, p); //для нахождения последующих h
+			//vectorX[currCountX + 1] = (vectorX[currCountX] + vectorX[currCountX + 2]) / 2;
+			//vectorX[currCountX + 3] = (vectorX[currCountX+2] + vectorX[currCountX + 4]) / 2;
+			//vectorX[currCountX + 5] = (vectorX[currCountX+4] + X) / 2;
 			currCountX+=Nx+1;
+			//currCountX = 6;
 		}
 
 		vectorX[currCountX] = X;
@@ -501,11 +507,11 @@ int MKR::makeMatrix()
 			// проверить, есть ли эти элементы на строке
 			if ((v + 1) % countX != 0)
 			{
-				Aij.u1[v] = 0; // тут пиздец
+				Aij.u1[v] = 0; 
 			}
 			if ((v + 1) % countX != 1)
 			{
-				Aij.l1[v - 1] = 0; // тут пиздец
+				Aij.l1[v - 1] = 0; 
 			}
 			if (v < grid.size() - countX && vectorAreas[grid[v + countX].area].lambda != 0) // 																			есть узел выше не фиктивный
 			{
@@ -529,6 +535,24 @@ int MKR::makeMatrix()
 					Aij.l2[v - countX] = -1 / h;
 					Aij.di[v] = 1 / h;
 				}
+			if (v + countX < grid.size())
+			{
+				if (grid[v + countX].area == 0 && grid[v + countX].y != countY)
+				{
+					type h = grid[v+countX].y - grid[v].y;
+					Aij.u2[v] = -1 / h;
+					Aij.di[v] = 1 / h;
+				}
+			}
+			if (v >= countX)
+			{
+				if (grid[v - countX].area == 0 && grid[v - countX].y != grid[0].y)
+				{
+					type h = grid[v].y - grid[v - countX].y;
+					Aij.l2[v - countX] = -1 / h;
+					Aij.di[v] = 1 / h;
+				}
+			}
 		}
 	}
 
@@ -544,13 +568,13 @@ int MKR::makeMatrix()
 				{
 					f[v] = -tetaX(grid[v], vectorB2x[i].teta);
 					double h = grid[v+1].x - grid[v].x;
-					Aij.u1[v] = 1 / h; // тут пиздец
+					Aij.u1[v] = 1 / h; 
 					Aij.di[v] = -1 / h;
 					
 					if ((v + 1) % countX != 0)
 					{  // если и левее узел
 						//type h = grid[v].x - grid[v - 1].x;
-						//Aij.l1[v - 1] = -1 / h; // тут пиздец
+						//Aij.l1[v - 1] = -1 / h; 
 						Aij.l1[v - 1] = 0;
 					}
 				}
@@ -560,7 +584,7 @@ int MKR::makeMatrix()
 						f[v] = tetaX(grid[v], vectorB2x[i].teta);
 						type h = grid[v].x - grid[v-1].x;
 						Aij.di[v] = 1 / h;
-						Aij.l1[v - 1] = -1 / h; // тут пиздец
+						Aij.l1[v - 1] = -1 / h; 
 						//Aij.u1[v] = 0;
 					}
 
@@ -573,27 +597,45 @@ int MKR::makeMatrix()
 				{
 					Aij.l2[v - countX] = 0;
 				}
+				if (grid[v].x < grid[countX-1].x)
+				{
+					if (grid[v + 1].area == 0 && grid[v].x != grid[0].x)
+					{
+						type h = grid[v].y - grid[v - 1].y;
+						Aij.l1[v - 1] = -1 / h;
+						Aij.di[v] = 1 / h;
+					}
+				}
+				if (grid[v].x > grid[0].x)
+				{
+					if (grid[v - 1].area == 0 && grid[v].x != grid[0].x)
+					{
+						type h = grid[v+1].y - grid[v].y;
+						Aij.u1[v] = -1 / h;
+						Aij.di[v] = 1 / h;
+					}
+				}
 
 			}
-		Aij.di[13] = 1;
-		Aij.l2[8] = -1;
-	//	f[13] = tetaX(grid[13], grid[13].area);
+	//	Aij.di[13] = 1;
+	//	Aij.l2[8] = -1;
+	  // f[13] = tetaY(grid[13], grid[13].area);
 
 	//	Aij.di[41] = 2;
 	//	Aij.l2[36] = -2;
-	//	f[41] = tetaX(grid[41], 8);
+	//	f[41] = tetaY(grid[41], 8);
 
 	//	Aij.di[42] = 2;
 	//	Aij.l2[37] = -2;
-	//	f[42] = tetaX(grid[42], 8);
+	//	f[42] = tetaY(grid[42], 8);
 
-	//	Aij.di[43] = 2;
+		//Aij.di[43] = 2;
 	//	Aij.l2[38] = -2;
-	//	f[43] = tetaX(grid[43], 8
+	//	f[43] = tetaY(grid[43], 8);
 
 	 //  Aij.di[19] = 1;
 	//	Aij.l2[12] = -1;
-		f[19] = tetaX(grid[19], grid[19].area);
+		//f[19] = tetaX(grid[19], grid[19].area);
 
 		// краевые 1
 		for (int i = 0; i < vectorB1.size(); i++)
